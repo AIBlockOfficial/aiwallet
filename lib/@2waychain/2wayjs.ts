@@ -44,9 +44,9 @@ export class Wallet {
     return 1234.56
   }
 
-  async sendTransaction(options: { to: string; amount: number }): Promise<string> {
-    console.log("Sending transaction:", options)
-    return "0x" + this.generateHash(JSON.stringify(options) + Date.now()).substring(0, 64)
+  async sendTransaction(params: { to: string; amount: number }): Promise<string> {
+    console.log("Sending transaction:", params)
+    return "0x" + this.generateHash(JSON.stringify(params) + Date.now()).substring(0, 64)
   }
 
   async getTransactionHistory(address?: string): Promise<any[]> {

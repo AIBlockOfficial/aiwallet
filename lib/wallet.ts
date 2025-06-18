@@ -1,8 +1,34 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Dynamic import to avoid SSR issues with bitcore-lib
-let WalletClass: any = null
-let generateSeedPhrase: any = null
-let testSeedPhrase: any = null
-let isClient = false
+interface SDKWalletClass {
+  new (): {
+    fromSeed?: (seedPhrase: string, config: Record<string, unknown>) => Promise<{ status: string; reason?: string }>
+    getNewKeypair?: (keypairs: unknown[]) => { status: string; content?: { newKeypairResponse?: { address: string }; address?: string } }
+    fromMnemonic?: (mnemonic: string, passphrase: string) => Promise<void>
+    getAddress?: () => string
+    getPrivateKey?: () => string
+    fetchBalance?: (addresses: string[]) => Promise<{ status: string; content?: unknown; reason?: string }>
+    getBalance?: (address: string) => Promise<number>
+    makeTokenPayment?: (to: string, amount: number, keypairs: unknown[], excessKeypair: unknown) => Promise<{ status: string; content?: { transactionHash?: string }; id?: string }>
+    sendTransaction?: (params: { to: string; amount: number }) => Promise<string>
+    make2WayPayment?: (paymentAddress: string, sendingAsset: unknown, receivingAsset: unknown, keypairs: unknown[], receiveAddress: unknown) => Promise<unknown>
+    fetchTransactions?: (keypairs: unknown[]) => Promise<{ content?: unknown[] }>
+    initNetwork?: (config: Record<string, unknown>) => Promise<void>
+  }
+}
+
+interface GenerateSeedPhraseFunction {
+  (): string
+}
+
+interface TestSeedPhraseFunction {
+  (seedPhrase: string): boolean
+}
+
+let WalletClass: SDKWalletClass | null = null
+let generateSeedPhrase: GenerateSeedPhraseFunction | null = null
+let testSeedPhrase: TestSeedPhraseFunction | null = null
 
 // Network configuration with environment variable support
 const getNetworkConfig = (passphrase: string) => ({
@@ -16,21 +42,19 @@ const getNetworkConfig = (passphrase: string) => ({
 const getSDKModules = async () => {
   if (typeof window === 'undefined') return { WalletClass: null, generateSeedPhrase: null, testSeedPhrase: null } // Server-side, return null
   
-  isClient = true
-  
   if (!WalletClass || !generateSeedPhrase || !testSeedPhrase) {
     try {
       // Try to load the real 2Way.js SDK first
       const sdkModule = await import("@2waychain/2wayjs")
-      WalletClass = sdkModule.Wallet
-      generateSeedPhrase = sdkModule.generateSeedPhrase
-      testSeedPhrase = sdkModule.testSeedPhrase
+      WalletClass = sdkModule.Wallet as SDKWalletClass
+      generateSeedPhrase = sdkModule.generateSeedPhrase as GenerateSeedPhraseFunction
+      testSeedPhrase = sdkModule.testSeedPhrase as TestSeedPhraseFunction
       console.log("Loaded real 2Way.js SDK with utilities")
-    } catch (error) {
+    } catch {
       console.log("Real SDK not available, using local mock")
       // Fall back to local mock
       const localModule = await import("./@2waychain/2wayjs")
-      WalletClass = localModule.Wallet
+      WalletClass = localModule.Wallet as SDKWalletClass
       generateSeedPhrase = null
       testSeedPhrase = null
     }

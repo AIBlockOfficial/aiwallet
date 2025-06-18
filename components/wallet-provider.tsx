@@ -10,11 +10,18 @@ interface WalletContextType {
   address: string | null
   balance: string
   nftCount: number | string
-  walletData: any
+  walletData: WalletData | null
   balanceError: string | null
   connect: () => Promise<void>
   disconnect: () => void
   refreshBalance: () => Promise<void>
+}
+
+interface WalletData {
+  address: string
+  privateKey: string
+  mnemonic: string[]
+  passphrase: string
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -24,9 +31,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null)
   const [balance, setBalance] = useState("")
   const [nftCount, setNftCount] = useState(0)
-  const [walletData, setWalletData] = useState<any>(null)
+  const [walletData, setWalletData] = useState<WalletData | null>(null)
   const [isClient, setIsClient] = useState(false)
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
   const [balanceError, setBalanceError] = useState<string | null>(null)
   const [hasInitialLoad, setHasInitialLoad] = useState(false)
 
@@ -84,7 +90,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     const targetAddress = walletAddress || address
     if (!targetAddress || !isClient) return
 
-    setIsLoadingBalance(true)
     setBalanceError(null) // Clear previous errors
     console.log("Fetching balance for address:", targetAddress)
 
@@ -101,8 +106,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
       setBalanceError(errorMessage)
       // Don't update balance/nftCount on error - keep previous values or show error state
-    } finally {
-      setIsLoadingBalance(false)
     }
   }
 

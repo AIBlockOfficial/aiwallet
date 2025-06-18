@@ -28,7 +28,7 @@ export const initIAssetItem = (itemData: { Item: { amount: number; genesis_hash:
 }
 
 // Generate keypair from wallet data
-export const generateKeypairFromWallet = (walletData: any): IKeypairEncrypted => {
+export const generateKeypairFromWallet = (walletData: { address: string; privateKey: string; publicKey?: string }): IKeypairEncrypted => {
   return {
     address: walletData.address,
     privateKey: walletData.privateKey,
@@ -92,4 +92,8 @@ export const getStoredKeypairs = (): IKeypairEncrypted[] => {
     console.error("Failed to get stored keypairs:", error)
     return []
   }
+}
+
+export const generateKeypair = (seed?: string): Keypair => {
+  // Implementation of generateKeypair function
 } 

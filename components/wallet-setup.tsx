@@ -8,7 +8,14 @@ import { Eye, EyeOff, Copy, Check, Loader2, AlertCircle, Wallet, KeyRound, Refre
 import { walletService, generateMnemonic, encryptWalletData, validateMnemonic, decryptWalletData } from "@/lib/wallet"
 
 interface WalletSetupProps {
-  onSetupComplete: (walletData: any) => void
+  onSetupComplete: (walletData: WalletData) => void
+}
+
+interface WalletData {
+  address: string
+  privateKey: string
+  mnemonic: string[]
+  passphrase: string
 }
 
 export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
@@ -24,7 +31,7 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
   const [recoveryMnemonic, setRecoveryMnemonic] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [walletData, setWalletData] = useState<any>(null)
+  const [walletData, setWalletData] = useState<WalletData | null>(null)
   const [error, setError] = useState<string>("")
 
   // Get user info from login
@@ -153,6 +160,8 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
 
   const handleFinishSetup = async () => {
     setError("")
+    if (!walletData) return
+    
     try {
       const encryptedData = await encryptWalletData(walletData, passphrase)
       localStorage.setItem("wallet_encrypted", encryptedData)
@@ -475,7 +484,7 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
                     Creating Wallet...
                   </>
                 ) : (
-                  "I've Saved My Phrase"
+                  "I&apos;ve Saved My Phrase"
                 )}
               </Button>
             </div>
