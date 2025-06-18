@@ -3,12 +3,12 @@
 // Dynamic import to avoid SSR issues with bitcore-lib
 interface SDKWalletClass {
   new (): {
-    fromSeed?: (seedPhrase: string, config: Record<string, unknown>) => Promise<{ status: string; reason?: string }>
-    getNewKeypair?: (keypairs: unknown[]) => { status: string; content?: { newKeypairResponse?: { address: string }; address?: string } }
+    fromSeed?: (seedPhrase: string, config: any) => Promise<{ status: string; reason?: string }>
+    getNewKeypair?: (keypairs: unknown[]) => { status: string; content?: { newKeypairResponse?: { address?: string }; address?: string } }
     fromMnemonic?: (mnemonic: string, passphrase: string) => Promise<void>
     getAddress?: () => string
     getPrivateKey?: () => string
-    fetchBalance?: (addresses: string[]) => Promise<{ status: string; content?: unknown; reason?: string }>
+    fetchBalance?: (addresses: string[]) => Promise<{ status: string; content?: any; reason?: string }>
     getBalance?: (address: string) => Promise<number>
     makeTokenPayment?: (to: string, amount: number, keypairs: unknown[], excessKeypair: unknown) => Promise<{ status: string; content?: { transactionHash?: string }; id?: string }>
     sendTransaction?: (params: { to: string; amount: number }) => Promise<string>
@@ -46,7 +46,7 @@ const getSDKModules = async () => {
     try {
       // Try to load the real 2Way.js SDK first
       const sdkModule = await import("@2waychain/2wayjs")
-      WalletClass = sdkModule.Wallet as SDKWalletClass
+      WalletClass = sdkModule.Wallet as unknown as SDKWalletClass
       generateSeedPhrase = sdkModule.generateSeedPhrase as GenerateSeedPhraseFunction
       testSeedPhrase = sdkModule.testSeedPhrase as TestSeedPhraseFunction
       console.log("Loaded real 2Way.js SDK with utilities")
@@ -150,26 +150,37 @@ export class WalletService {
         
         if (initResult?.status === 'success') {
           // Generate the first keypair after initialization
-          const keypairResult = wallet.getNewKeypair([])
-          
-          console.log("getNewKeypair result:", keypairResult)
-          
-          if (keypairResult?.status === 'success' && keypairResult.content) {
-            const keypair = keypairResult.content.newKeypairResponse || keypairResult.content
-            return {
-              address: keypair.address,
-              privateKey: "", // Private key is encrypted in the SDK
-              mnemonic,
-              passphrase,
+          if (wallet.getNewKeypair) {
+            const keypairResult = wallet.getNewKeypair([])
+            
+            console.log("getNewKeypair result:", keypairResult)
+            
+            if (keypairResult?.status === 'success' && keypairResult.content) {
+              const keypair = keypairResult.content.newKeypairResponse || keypairResult.content
+              const address = keypair?.address
+              if (!address) {
+                throw new Error("No address returned from keypair generation")
+              }
+              return {
+                address,
+                privateKey: "", // Private key is encrypted in the SDK
+                mnemonic,
+                passphrase,
+              }
             }
           }
         }
       } else if (wallet.fromMnemonic) {
         // Use local mock method
         await wallet.fromMnemonic(mnemonic.join(" "), passphrase)
+        const address = wallet.getAddress?.()
+        const privateKey = wallet.getPrivateKey?.()
+        if (!address || !privateKey) {
+          throw new Error("Failed to get wallet address or private key")
+        }
         return {
-          address: wallet.getAddress(),
-          privateKey: wallet.getPrivateKey(),
+          address,
+          privateKey,
           mnemonic,
           passphrase,
         }
@@ -199,24 +210,35 @@ export class WalletService {
         
         if (initResult?.status === 'success') {
           // Generate the first keypair after initialization
-          const keypairResult = wallet.getNewKeypair([])
-          
-          if (keypairResult?.status === 'success' && keypairResult.content) {
-            const keypair = keypairResult.content.newKeypairResponse || keypairResult.content
-            return {
-              address: keypair.address,
-              privateKey: "", // Private key is encrypted in the SDK
-              mnemonic,
-              passphrase,
+          if (wallet.getNewKeypair) {
+            const keypairResult = wallet.getNewKeypair([])
+            
+            if (keypairResult?.status === 'success' && keypairResult.content) {
+              const keypair = keypairResult.content.newKeypairResponse || keypairResult.content
+              const address = keypair?.address
+              if (!address) {
+                throw new Error("No address returned from keypair generation")
+              }
+              return {
+                address,
+                privateKey: "", // Private key is encrypted in the SDK
+                mnemonic,
+                passphrase,
+              }
             }
           }
         }
       } else if (wallet.fromMnemonic) {
         // Use local mock method
         await wallet.fromMnemonic(mnemonic.join(" "), passphrase)
+        const address = wallet.getAddress?.()
+        const privateKey = wallet.getPrivateKey?.()
+        if (!address || !privateKey) {
+          throw new Error("Failed to get wallet address or private key")
+        }
         return {
-          address: wallet.getAddress(),
-          privateKey: wallet.getPrivateKey(),
+          address,
+          privateKey,
           mnemonic,
           passphrase,
         }
@@ -306,21 +328,21 @@ export class WalletService {
         if (balanceResult?.status === 'success' && balanceResult.content) {
           console.log("Balance content:", JSON.stringify(balanceResult.content, null, 2))
           
-          const fetchBalanceResponse = balanceResult.content.fetchBalanceResponse || balanceResult.content
+          const fetchBalanceResponse = (balanceResult.content as any).fetchBalanceResponse || balanceResult.content
           console.log("Fetch balance response:", JSON.stringify(fetchBalanceResponse, null, 2))
           
           // Handle different possible response structures
           let tokens = "0"
           let nftCount = 0
           
-          if (fetchBalanceResponse.total) {
+          if (fetchBalanceResponse?.total) {
             // Structure: { total: { tokens: number, items: {...} } }
             const tokenCents = fetchBalanceResponse.total.tokens || 0
             tokens = (tokenCents / 72072000).toString()
             const items = fetchBalanceResponse.total.items || {}
             nftCount = Object.keys(items).length
             console.log("Parsed from total - token cents:", tokenCents, "AIBX tokens:", tokens, "items:", items, "nftCount:", nftCount)
-          } else if (fetchBalanceResponse.tokens !== undefined) {
+          } else if (fetchBalanceResponse?.tokens !== undefined) {
             // Structure: { tokens: number, items: {...} }
             const tokenCents = fetchBalanceResponse.tokens || 0
             tokens = (tokenCents / 72072000).toString()

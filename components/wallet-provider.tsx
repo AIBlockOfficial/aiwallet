@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { walletService } from "@/lib/wallet"
 
 interface WalletContextType {
@@ -41,36 +41,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setIsClient(true)
   }, [])
 
-  useEffect(() => {
-    // Only access localStorage on client side
-    if (!isClient) return
-
-    try {
-      const savedAddress = localStorage.getItem("wallet_address")
-      const walletSetup = localStorage.getItem("wallet_setup")
-
-      if (savedAddress && walletSetup) {
-        setAddress(savedAddress)
-        setIsConnected(true)
-        // Refresh balance immediately when wallet is loaded
-        refreshBalance(savedAddress)
-      }
-    } catch (error) {
-      console.error("Failed to load wallet from storage:", error)
-    }
-  }, [isClient])
-
-  // Auto-refresh balance every 30 seconds when connected
-  useEffect(() => {
-    if (!isConnected || !address || balanceError) return // Don't auto-refresh if there's an error
-
-    const interval = setInterval(() => {
-      refreshBalance()
-    }, 30000) // 30 seconds
-
-    return () => clearInterval(interval)
-  }, [isConnected, address, balanceError])
-
   const formatBalance = (tokens: string): string => {
     // Handle loading state
     if (tokens === "Loading...") return tokens
@@ -86,7 +56,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const refreshBalance = async (walletAddress?: string) => {
+  const refreshBalance = useCallback(async (walletAddress?: string) => {
     const targetAddress = walletAddress || address
     if (!targetAddress || !isClient) return
 
@@ -107,7 +77,37 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setBalanceError(errorMessage)
       // Don't update balance/nftCount on error - keep previous values or show error state
     }
-  }
+  }, [address, isClient])
+
+  useEffect(() => {
+    // Only access localStorage on client side
+    if (!isClient) return
+
+    try {
+      const savedAddress = localStorage.getItem("wallet_address")
+      const walletSetup = localStorage.getItem("wallet_setup")
+
+      if (savedAddress && walletSetup) {
+        setAddress(savedAddress)
+        setIsConnected(true)
+        // Refresh balance immediately when wallet is loaded
+        refreshBalance(savedAddress)
+      }
+    } catch (error) {
+      console.error("Failed to load wallet from storage:", error)
+    }
+  }, [isClient, refreshBalance])
+
+  // Auto-refresh balance every 30 seconds when connected
+  useEffect(() => {
+    if (!isConnected || !address || balanceError) return // Don't auto-refresh if there's an error
+
+    const interval = setInterval(() => {
+      refreshBalance()
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [isConnected, address, balanceError, refreshBalance])
 
   const connect = async () => {
     if (!isClient) return
