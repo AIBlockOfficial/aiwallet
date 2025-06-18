@@ -92,8 +92,4 @@ export const getStoredKeypairs = (): IKeypairEncrypted[] => {
     console.error("Failed to get stored keypairs:", error)
     return []
   }
-}
-
-export const generateKeypair = (seed?: string): Keypair => {
-  // Implementation of generateKeypair function
 } 
