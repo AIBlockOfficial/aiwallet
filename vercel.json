@@ -1,0 +1,48 @@
+{
+  "name": "aiwallet",
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm ci",
+  "devCommand": "npm run dev",
+  "env": {
+    "NEXT_PUBLIC_MEMPOOL_HOST": "@mempool_host",
+    "NEXT_PUBLIC_STORAGE_HOST": "@storage_host",
+    "NEXT_PUBLIC_VALENCE_HOST": "@valence_host"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_MEMPOOL_HOST": "@mempool_host",
+      "NEXT_PUBLIC_STORAGE_HOST": "@storage_host",
+      "NEXT_PUBLIC_VALENCE_HOST": "@valence_host"
+    }
+  },
+  "functions": {
+    "app/**/*.tsx": {
+      "maxDuration": 30
+    },
+    "app/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
+} 
