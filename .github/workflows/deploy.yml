@@ -1,4 +1,4 @@
-name: Deploy to Vercel
+name: Build and Test
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     
     steps:
@@ -23,28 +23,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
+      - name: Run linting
+        run: npm run lint
+        
+      - name: Run type checking
+        run: npx tsc --noEmit
+        
       - name: Build project
         run: npm run build
         env:
-          NEXT_PUBLIC_MEMPOOL_HOST: ${{ secrets.NEXT_PUBLIC_MEMPOOL_HOST }}
-          NEXT_PUBLIC_STORAGE_HOST: ${{ secrets.NEXT_PUBLIC_STORAGE_HOST }}
-          NEXT_PUBLIC_VALENCE_HOST: ${{ secrets.NEXT_PUBLIC_VALENCE_HOST }}
-          
-      - name: Deploy to Vercel (Production)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: ./
-          
-      - name: Deploy to Vercel (Preview)
-        if: github.event_name == 'pull_request'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./ 
+          # Use the same environment variables as defined in vercel.json
+          NEXT_PUBLIC_MEMPOOL_HOST: "https://mempool.aiblock.dev"
+          NEXT_PUBLIC_STORAGE_HOST: "https://storage.aiblock.dev"
+          NEXT_PUBLIC_VALENCE_HOST: "https://valence.aiblock.dev" 

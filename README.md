@@ -67,40 +67,44 @@ A secure blockchain wallet application built with Next.js 14 and integrated with
 
 ## Deployment
 
-### Automatic Deployment with GitHub Actions
+### Recommended: Vercel GitHub Integration
 
-This project is configured for automatic deployment to Vercel using GitHub Actions.
+The easiest way to deploy this project is using Vercel's GitHub integration:
 
-#### Setup Steps:
-
-1. **Create a Vercel Project**
+1. **Connect to Vercel**
    - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "Add New..." → "Project"
    - Import your GitHub repository
-   - Note down your Project ID and Org ID
+   - Vercel will automatically detect it's a Next.js project
 
-2. **Get Vercel Token**
-   - Go to Vercel Settings → Tokens
-   - Create a new token with appropriate permissions
-
-3. **Configure GitHub Secrets**
-   In your GitHub repository settings → Secrets and variables → Actions, add:
-   
-   ```
-   VERCEL_TOKEN=your_vercel_token
-   VERCEL_ORG_ID=your_org_id
-   VERCEL_PROJECT_ID=your_project_id
-   NEXT_PUBLIC_MEMPOOL_HOST=https://mempool.aiblock.dev
-   NEXT_PUBLIC_STORAGE_HOST=https://storage.aiblock.dev
-   NEXT_PUBLIC_VALENCE_HOST=https://valence.aiblock.dev
+2. **Environment Variables**
+   The environment variables are already configured in `vercel.json`:
+   ```json
+   {
+     "NEXT_PUBLIC_MEMPOOL_HOST": "https://mempool.aiblock.dev",
+     "NEXT_PUBLIC_STORAGE_HOST": "https://storage.aiblock.dev", 
+     "NEXT_PUBLIC_VALENCE_HOST": "https://valence.aiblock.dev"
+   }
    ```
 
-4. **Configure Vercel Environment Variables**
-   In Vercel Dashboard → Project Settings → Environment Variables, add:
-   ```
-   @mempool_host → https://mempool.aiblock.dev
-   @storage_host → https://storage.aiblock.dev  
-   @valence_host → https://valence.aiblock.dev
-   ```
+3. **Deploy**
+   - Click "Deploy"
+   - Vercel will automatically deploy on every push to main branch
+
+### Alternative: GitHub Actions (Advanced)
+
+If you prefer GitHub Actions deployment, configure these secrets in your repository:
+
+```
+VERCEL_TOKEN=your_vercel_token
+VERCEL_ORG_ID=your_org_id  
+VERCEL_PROJECT_ID=your_project_id
+```
+
+Get these values from:
+- **Token**: Vercel Dashboard → Settings → Tokens
+- **Org ID**: Vercel Dashboard → Settings → General
+- **Project ID**: Project Settings → General
 
 ### Manual Deployment
 
@@ -108,9 +112,17 @@ This project is configured for automatic deployment to Vercel using GitHub Actio
 # Install Vercel CLI
 npm i -g vercel
 
-# Deploy to Vercel
+# Deploy to Vercel  
 vercel --prod
 ```
+
+### Build Verification
+
+The GitHub Actions workflow automatically:
+- ✅ Runs ESLint checks
+- ✅ Performs TypeScript compilation
+- ✅ Builds the production bundle
+- ✅ Verifies all environment variables
 
 ## Project Structure
 
