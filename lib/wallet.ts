@@ -26,9 +26,20 @@ interface TestSeedPhraseFunction {
   (seedPhrase: string): boolean
 }
 
-let WalletClass: SDKWalletClass | null = null
-let generateSeedPhrase: GenerateSeedPhraseFunction | null = null
-let testSeedPhrase: TestSeedPhraseFunction | null = null
+// Cache SDK modules to avoid repeated loading
+const sdkCache: {
+  WalletClass: SDKWalletClass | null
+  generateSeedPhrase: GenerateSeedPhraseFunction | null
+  testSeedPhrase: TestSeedPhraseFunction | null
+  isLoading: boolean
+  loadPromise: Promise<any> | null
+} = {
+  WalletClass: null,
+  generateSeedPhrase: null,
+  testSeedPhrase: null,
+  isLoading: false,
+  loadPromise: null
+}
 
 // Network configuration with environment variable support
 const getNetworkConfig = (passphrase: string) => ({
@@ -40,26 +51,73 @@ const getNetworkConfig = (passphrase: string) => ({
 })
 
 const getSDKModules = async () => {
-  if (typeof window === 'undefined') return { WalletClass: null, generateSeedPhrase: null, testSeedPhrase: null } // Server-side, return null
+  if (typeof window === 'undefined') {
+    return { WalletClass: null, generateSeedPhrase: null, testSeedPhrase: null }
+  }
   
-  if (!WalletClass || !generateSeedPhrase || !testSeedPhrase) {
-    try {
-      // Try to load the real 2Way.js SDK first
-      const sdkModule = await import("@2waychain/2wayjs")
-      WalletClass = sdkModule.Wallet as unknown as SDKWalletClass
-      generateSeedPhrase = sdkModule.generateSeedPhrase as GenerateSeedPhraseFunction
-      testSeedPhrase = sdkModule.testSeedPhrase as TestSeedPhraseFunction
-      console.log("Loaded real 2Way.js SDK with utilities")
-    } catch {
-      console.log("Real SDK not available, using local mock")
-      // Fall back to local mock
-      const localModule = await import("./@2waychain/2wayjs")
-      WalletClass = localModule.Wallet as SDKWalletClass
-      generateSeedPhrase = null
-      testSeedPhrase = null
+  // Return cached modules if already loaded
+  if (sdkCache.WalletClass && sdkCache.generateSeedPhrase && sdkCache.testSeedPhrase) {
+    return {
+      WalletClass: sdkCache.WalletClass,
+      generateSeedPhrase: sdkCache.generateSeedPhrase,
+      testSeedPhrase: sdkCache.testSeedPhrase
     }
   }
-  return { WalletClass, generateSeedPhrase, testSeedPhrase }
+  
+  // If already loading, wait for the existing promise
+  if (sdkCache.isLoading && sdkCache.loadPromise) {
+    await sdkCache.loadPromise
+    return {
+      WalletClass: sdkCache.WalletClass,
+      generateSeedPhrase: sdkCache.generateSeedPhrase,
+      testSeedPhrase: sdkCache.testSeedPhrase
+    }
+  }
+  
+  // Start loading
+  sdkCache.isLoading = true
+  sdkCache.loadPromise = loadSDKModules()
+  
+  try {
+    await sdkCache.loadPromise
+  } finally {
+    sdkCache.isLoading = false
+    sdkCache.loadPromise = null
+  }
+  
+  return {
+    WalletClass: sdkCache.WalletClass,
+    generateSeedPhrase: sdkCache.generateSeedPhrase,
+    testSeedPhrase: sdkCache.testSeedPhrase
+  }
+}
+
+const loadSDKModules = async () => {
+  try {
+    console.log("Loading 2Way.js SDK...")
+    // Try to load the real 2Way.js SDK first
+    const sdkModule = await import("@2waychain/2wayjs")
+    sdkCache.WalletClass = sdkModule.Wallet as unknown as SDKWalletClass
+    sdkCache.generateSeedPhrase = sdkModule.generateSeedPhrase as GenerateSeedPhraseFunction
+    sdkCache.testSeedPhrase = sdkModule.testSeedPhrase as TestSeedPhraseFunction
+    console.log("✅ Loaded real 2Way.js SDK successfully")
+  } catch (error) {
+    console.log("⚠️ Real SDK not available, loading local mock...")
+    // Fall back to local mock
+    const localModule = await import("./@2waychain/2wayjs")
+    sdkCache.WalletClass = localModule.Wallet as SDKWalletClass
+    sdkCache.generateSeedPhrase = null
+    sdkCache.testSeedPhrase = null
+    console.log("✅ Loaded local mock SDK")
+  }
+}
+
+// Pre-load SDK modules when the module is imported (only on client-side)
+if (typeof window !== 'undefined') {
+  // Use setTimeout to avoid blocking the initial render
+  setTimeout(() => {
+    getSDKModules().catch(console.error)
+  }, 100)
 }
 
 interface WalletData {

@@ -19,6 +19,17 @@ const nextConfig = {
   experimental: {
     esmExternals: true,
   },
+  // Enable compression
+  compress: true,
+  // Performance optimizations
+  swcMinify: true,
+  // Reduce bundle size by removing unused code
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+      skipDefaultConversion: true,
+    },
+  },
 }
 
 export default nextConfig

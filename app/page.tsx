@@ -1,10 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense, lazy } from "react"
 import { LoginPage } from "@/components/login-page"
-import { WalletSetup } from "@/components/wallet-setup"
-import { WalletInterface } from "@/components/wallet-interface"
-import { WalletProvider } from "@/components/wallet-provider"
+
+// Lazy load heavy wallet components
+const WalletSetup = lazy(() => import("@/components/wallet-setup").then(module => ({ default: module.WalletSetup })))
+const WalletInterface = lazy(() => import("@/components/wallet-interface").then(module => ({ default: module.WalletInterface })))
+const WalletProvider = lazy(() => import("@/components/wallet-provider").then(module => ({ default: module.WalletProvider })))
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="text-lg">Loading...</div>
+    </div>
+  </div>
+)
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -45,11 +57,7 @@ export default function Home() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   if (!isLoggedIn) {
@@ -57,12 +65,18 @@ export default function Home() {
   }
 
   if (!hasWallet) {
-    return <WalletSetup onSetupComplete={handleWalletSetupComplete} />
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <WalletSetup onSetupComplete={handleWalletSetupComplete} />
+      </Suspense>
+    )
   }
 
   return (
-    <WalletProvider>
-      <WalletInterface />
-    </WalletProvider>
+    <Suspense fallback={<LoadingSpinner />}>
+      <WalletProvider>
+        <WalletInterface />
+      </WalletProvider>
+    </Suspense>
   )
 }
