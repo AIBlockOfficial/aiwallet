@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Wallet, LogOut, Copy, Check, RefreshCw, AlertCircle } from "lucide-react"
+import { Wallet, LogOut, Copy, Check, RefreshCw, AlertCircle, Send } from "lucide-react"
 import { useWallet } from "@/components/wallet-provider"
 
 interface Message {
@@ -45,7 +45,11 @@ const SDKLoadingIndicator = () => {
   return (
     <div className="fixed top-4 right-4 z-50">
       <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-center space-x-2">
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+        <img 
+          src="/logo_spinner.svg" 
+          alt="Loading" 
+          className="h-4 w-4 animate-spin"
+        />
         <span className="text-sm text-primary">Initializing wallet SDK...</span>
       </div>
     </div>
@@ -88,7 +92,7 @@ export function WalletInterface() {
     setTimeout(() => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: `Hello! I'm your AI wallet assistant. I can see your wallet address is ${address?.slice(0, 6)}...${address?.slice(-4)}... and you currently have ${balance} AIBX and ${nftCount} NFTs. How can I help you manage your blockchain assets?`,
+        content: `Hello! I'm your PeerStone wallet assistant. I can see your wallet address is ${address?.slice(0, 6)}...${address?.slice(-4)}... and you currently have ${balance} AIBX and ${nftCount} NFTs. How can I help you manage your blockchain assets?`,
         isUser: false,
         timestamp: new Date(),
       }
@@ -156,11 +160,15 @@ export function WalletInterface() {
         <div className="flex justify-between items-center p-6 border-b">
           {/* Brand */}
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Wallet className="h-4 w-4 text-primary-foreground" />
+            <div className="w-auto h-16 flex items-center justify-center">
+              <img 
+                src="/logo_static.svg" 
+                alt="PeerStone" 
+                className="h-16 w-auto object-contain"
+              />
             </div>
             <div>
-              <div className="font-semibold text-lg">AIWallet</div>
+              <div className="font-semibold text-lg">PeerStone</div>
               <div className="text-xs text-muted-foreground">wallet.aiblock.net</div>
             </div>
           </div>
@@ -262,34 +270,32 @@ export function WalletInterface() {
 
                 {/* Chat input - More prominent */}
                 <div className="space-y-4">
-                  <div className="space-y-3">
+                  <div className="flex space-x-3">
                     <Input
                       placeholder="Type your message here..."
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
                       disabled={isLoading}
-                      className="w-full h-12 text-base px-4 border-2 focus:border-primary"
+                      className="flex-1 h-12 text-base px-4 border-2 focus:border-primary"
                     />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!inputValue.trim() || isLoading}
+                      size="icon"
+                      className="h-12 w-12"
+                    >
+                      {isLoading ? (
+                        <img 
+                          src="/logo_spinner.svg" 
+                          alt="Loading" 
+                          className="h-5 w-5 animate-spin"
+                        />
+                      ) : (
+                        <Send className="h-5 w-5" />
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!inputValue.trim() || isLoading}
-                    className="w-full h-12 text-base font-medium"
-                    size="lg"
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Message
-                      </>
-                    )}
-                  </Button>
                 </div>
 
                 {/* Suggestions - Optional quick actions */}
@@ -305,7 +311,7 @@ export function WalletInterface() {
                     onClick={() => setInputValue("How do I send AIBX?")}
                     className="p-3 text-left rounded-lg border hover:bg-muted/50 transition-colors"
                   >
-                    <Send className="h-5 w-5 mb-2 text-primary" />
+                    <Wallet className="h-5 w-5 mb-2 text-primary" />
                     <div className="font-medium text-sm">Send AIBX</div>
                   </button>
                   <button
@@ -380,7 +386,15 @@ export function WalletInterface() {
                     size="icon"
                     className="h-11 w-11"
                   >
-                    <Send className="h-4 w-4" />
+                    {isLoading ? (
+                      <img 
+                        src="/logo_spinner.svg" 
+                        alt="Loading" 
+                        className="h-5 w-5 animate-spin"
+                      />
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
                   </Button>
                 </div>
               </div>

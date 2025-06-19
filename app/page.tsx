@@ -12,8 +12,12 @@ const WalletProvider = lazy(() => import("@/components/wallet-provider").then(mo
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="flex flex-col items-center space-y-4">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      <div className="text-lg">Loading...</div>
+      <img 
+        src="/logo_spinner.svg" 
+        alt="Loading" 
+        className="h-12 w-12 animate-spin"
+      />
+      <div className="text-lg">Loading PeerStone...</div>
     </div>
   </div>
 )

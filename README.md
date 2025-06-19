@@ -1,4 +1,4 @@
-# AIWallet
+# PeerStone
 
 A secure blockchain wallet application built with Next.js 14 and integrated with the AIBlock 2Way.js SDK.
 
@@ -36,8 +36,8 @@ A secure blockchain wallet application built with Next.js 14 and integrated with
 
 1. **Clone the repository**
    ```bash
-   git clone git@github.com:AIBlockOfficial/aiwallet.git
-   cd aiwallet
+   git clone git@github.com:AIBlockOfficial/peerstone.git
+   cd peerstone
    ```
 
 2. **Install dependencies**
@@ -128,7 +128,7 @@ The GitHub Actions workflow automatically:
 ## Project Structure
 
 ```
-aiwallet/
+peerstone/
 ├── app/                    # Next.js 14 app directory
 │   ├── layout.tsx         # Root layout
 │   ├── page.tsx           # Main page with authentication flow
@@ -178,7 +178,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 For support and questions:
-- GitHub Issues: [Create an issue](https://github.com/AIBlockOfficial/aiwallet/issues)
+- GitHub Issues: [Create an issue](https://github.com/AIBlockOfficial/peerstone/issues)
 - Documentation: [AIBlock 2Way.js SDK](https://github.com/AIBlockOfficial/2Way.js)
 
 ---
