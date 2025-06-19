@@ -67,9 +67,24 @@ A secure blockchain wallet application built with Next.js 14 and integrated with
 
 ## Deployment
 
-### Recommended: Vercel GitHub Integration
+### Automatic Deployment (Recommended)
 
-The easiest way to deploy this project is using Vercel's GitHub integration:
+This project uses GitHub Actions + Vercel deploy hooks for seamless deployment:
+
+1. **Automatic Process**:
+   - Push to `main` branch triggers GitHub Actions
+   - Actions run: linting → type checking → build verification
+   - On success, triggers Vercel deployment via webhook
+   - Vercel pulls latest code from GitHub and deploys
+
+2. **No Configuration Needed**:
+   - Deploy hook is already configured in the workflow
+   - Environment variables are set in `vercel.json`
+   - Just push to main and your app deploys automatically!
+
+### Alternative: Direct Vercel GitHub Integration
+
+You can also use Vercel's GitHub integration directly:
 
 1. **Connect to Vercel**
    - Go to [Vercel Dashboard](https://vercel.com/dashboard)
@@ -91,21 +106,6 @@ The easiest way to deploy this project is using Vercel's GitHub integration:
    - Click "Deploy"
    - Vercel will automatically deploy on every push to main branch
 
-### Alternative: GitHub Actions (Advanced)
-
-If you prefer GitHub Actions deployment, configure these secrets in your repository:
-
-```
-VERCEL_TOKEN=your_vercel_token
-VERCEL_ORG_ID=your_org_id  
-VERCEL_PROJECT_ID=your_project_id
-```
-
-Get these values from:
-- **Token**: Vercel Dashboard → Settings → Tokens
-- **Org ID**: Vercel Dashboard → Settings → General
-- **Project ID**: Project Settings → General
-
 ### Manual Deployment
 
 ```bash
@@ -123,6 +123,7 @@ The GitHub Actions workflow automatically:
 - ✅ Performs TypeScript compilation
 - ✅ Builds the production bundle
 - ✅ Verifies all environment variables
+- ✅ Triggers Vercel deployment on success
 
 ## Project Structure
 

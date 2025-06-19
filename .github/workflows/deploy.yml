@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build, Test, and Deploy
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
@@ -35,4 +35,9 @@ jobs:
           # Use the same environment variables as defined in vercel.json
           NEXT_PUBLIC_MEMPOOL_HOST: "https://mempool.aiblock.dev"
           NEXT_PUBLIC_STORAGE_HOST: "https://storage.aiblock.dev"
-          NEXT_PUBLIC_VALENCE_HOST: "https://valence.aiblock.dev" 
+          NEXT_PUBLIC_VALENCE_HOST: "https://valence.aiblock.dev"
+          
+      - name: Trigger Vercel Deployment
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_QcBxUXA8tMK0SDqkQSJ5pWY1awWL/2IS2EAhxQB" 
