@@ -53,14 +53,18 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       <div className="mx-auto grid w-[350px] gap-6">
         {/* Brand Icon */}
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-            <Wallet className="h-6 w-6 text-primary-foreground" />
+          <div className="w-16 h-16 flex items-center justify-center">
+            <img 
+              src="/logo_static.svg" 
+              alt="PeerStone" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
         </div>
 
         {/* Brand Header */}
         <div className="grid gap-2 text-center">
-          <h1 className="text-3xl font-bold">Welcome to AIWallet</h1>
+          <h1 className="text-3xl font-bold">Welcome to PeerStone</h1>
           <p className="text-balance text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline">

@@ -10,6 +10,8 @@ import { Eye, EyeOff, Copy, Check, Loader2, AlertCircle, Wallet, KeyRound, Refre
 
 interface WalletSetupProps {
   onSetupComplete: (walletData: WalletData) => void
+  onClose?: () => void
+  mode?: 'create' | 'unlock' | 'recover'
 }
 
 interface WalletData {
@@ -19,11 +21,13 @@ interface WalletData {
   passphrase: string
 }
 
-export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
+export function WalletSetup({ onSetupComplete, onClose, mode }: WalletSetupProps) {
   // Check if there's existing encrypted wallet data
-  const hasExistingWallet = typeof window !== 'undefined' && localStorage.getItem("wallet_encrypted")
+  const hasExistingWallet = typeof window !== 'undefined' && localStorage.getItem("encrypted_wallet_data")
   
-  const [mode, setMode] = useState<"create" | "unlock" | "recover">(hasExistingWallet ? "unlock" : "create")
+  const [currentMode, setCurrentMode] = useState<"create" | "unlock" | "recover">(
+    mode || (hasExistingWallet ? "unlock" : "create")
+  )
   const [step, setStep] = useState(1)
   const [passphrase, setPassphrase] = useState("")
   const [confirmPassphrase, setConfirmPassphrase] = useState("")
@@ -77,7 +81,7 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
     setError("")
     setIsCreating(true)
     try {
-      const encryptedData = localStorage.getItem("wallet_encrypted")
+      const encryptedData = localStorage.getItem("encrypted_wallet_data")
       if (!encryptedData) {
         throw new Error("No wallet data found")
       }
@@ -87,7 +91,8 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
       const walletData = await decryptWalletData(encryptedData, passphrase)
       localStorage.setItem("wallet_address", walletData.address)
       localStorage.setItem("wallet_setup", "true")
-      localStorage.setItem("wallet_passphrase", passphrase)
+      // SECURITY FIX: Do not store passphrase in localStorage
+      // localStorage.setItem("wallet_passphrase", passphrase)
 
       onSetupComplete(walletData)
     } catch (error) {
@@ -125,10 +130,11 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
       
       // Encrypt and save the recovered wallet
       const encryptedData = await encryptWalletData(wallet, passphrase)
-      localStorage.setItem("wallet_encrypted", encryptedData)
+      localStorage.setItem("encrypted_wallet_data", encryptedData)
       localStorage.setItem("wallet_address", wallet.address)
       localStorage.setItem("wallet_setup", "true")
-      localStorage.setItem("wallet_passphrase", passphrase)
+      // SECURITY FIX: Do not store passphrase in localStorage
+      // localStorage.setItem("wallet_passphrase", passphrase)
 
       onSetupComplete(wallet)
     } catch (error) {
@@ -177,12 +183,11 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
       // Dynamic import to avoid loading SDK until needed
       const { encryptWalletData } = await import("@/lib/wallet")
       const encryptedData = await encryptWalletData(walletData, passphrase)
-      localStorage.setItem("wallet_encrypted", encryptedData)
+      localStorage.setItem("encrypted_wallet_data", encryptedData)
       localStorage.setItem("wallet_address", walletData.address)
       localStorage.setItem("wallet_setup", "true")
-      // Store the passphrase for later use in balance fetching and other operations
-      // Note: In production, this should be more securely handled
-      localStorage.setItem("wallet_passphrase", passphrase)
+      // SECURITY FIX: Do not store passphrase in localStorage
+      // localStorage.setItem("wallet_passphrase", passphrase)
 
       onSetupComplete(walletData)
     } catch (error) {
@@ -196,27 +201,30 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
       <div className="mx-auto grid w-[400px] gap-6">
         {/* Brand Header */}
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-            <Wallet className="h-6 w-6 text-primary-foreground" />
+          <div className="w-16 h-16 flex items-center justify-center">
+            <img 
+              src="/logo_static.svg" 
+              alt="PeerStone" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
         </div>
 
-        {/* Header */}
-        <div className="grid gap-2 text-center">
-          <h1 className="text-3xl font-bold">
-            {mode === "create" && step === 1 && "Create AIWallet"}
-            {mode === "create" && step === 2 && "Backup Phrase"}
-            {mode === "create" && step === 3 && "Setup Complete"}
-            {mode === "unlock" && "Unlock Wallet"}
-            {mode === "recover" && "Recover Wallet"}
-          </h1>
-          <p className="text-balance text-muted-foreground">
-            {mode === "create" && step === 1 &&
-              `Welcome ${loginMethod === "google" ? userEmail : "back"}! Let's create your secure blockchain wallet.`}
-            {mode === "create" && step === 2 && "Write down these 12 words in order. Keep them safe and secret."}
-            {mode === "create" && step === 3 && "Your AIWallet is now ready to use."}
-            {mode === "unlock" && "Enter your passphrase to unlock your existing wallet."}
-            {mode === "recover" && "Enter your 12-word recovery phrase and create a new passphrase."}
+        {/* Tab Headers */}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">
+            {currentMode === "create" && step === 1 && "Create PeerStone Wallet"}
+            {currentMode === "unlock" && step === 1 && "Unlock Your Wallet"}
+            {currentMode === "recover" && step === 1 && "Recover Your Wallet"}
+            {currentMode === "create" && step === 2 && "Save Your Recovery Phrase"}
+            {currentMode === "create" && step === 3 && "Your PeerStone wallet is now ready to use."}
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            {currentMode === "create" && step === 1 && "Set up your secure blockchain wallet"}
+            {currentMode === "unlock" && step === 1 && "Enter your passphrase to access your wallet"}
+            {currentMode === "recover" && step === 1 && "Restore your wallet using your recovery phrase"}
+            {currentMode === "create" && step === 2 && "Store these words safely - they're your only way to recover your wallet"}
+            {currentMode === "create" && step === 3 && "Your wallet has been created successfully"}
           </p>
         </div>
 
@@ -225,8 +233,8 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
           <div className="grid gap-3">
             {hasExistingWallet && (
               <Button
-                variant={mode === "unlock" ? "default" : "outline"}
-                onClick={() => setMode("unlock")}
+                variant={currentMode === "unlock" ? "default" : "outline"}
+                onClick={() => setCurrentMode("unlock")}
                 className="w-full h-12"
               >
                 <KeyRound className="h-4 w-4 mr-2" />
@@ -235,8 +243,8 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
             )}
             
             <Button
-              variant={mode === "create" ? "default" : "outline"}
-              onClick={() => setMode("create")}
+              variant={currentMode === "create" ? "default" : "outline"}
+              onClick={() => setCurrentMode("create")}
               className="w-full h-12"
             >
               <Wallet className="h-4 w-4 mr-2" />
@@ -244,8 +252,8 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
             </Button>
             
             <Button
-              variant={mode === "recover" ? "default" : "outline"}
-              onClick={() => setMode("recover")}
+              variant={currentMode === "recover" ? "default" : "outline"}
+              onClick={() => setCurrentMode("recover")}
               className="w-full h-12"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -265,7 +273,7 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
         )}
 
         {/* Step 1: Create Wallet Passphrase Creation */}
-        {mode === "create" && step === 1 && (
+        {currentMode === "create" && step === 1 && (
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="passphrase">Wallet Passphrase</Label>
@@ -331,7 +339,7 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
         )}
 
         {/* Unlock Wallet Form */}
-        {mode === "unlock" && step === 1 && (
+        {currentMode === "unlock" && step === 1 && (
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="unlock-passphrase">Wallet Passphrase</Label>
@@ -384,7 +392,7 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
         )}
 
         {/* Recover Wallet Form */}
-        {mode === "recover" && step === 1 && (
+        {currentMode === "recover" && step === 1 && (
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="recovery-phrase">12-Word Recovery Phrase</Label>
@@ -451,7 +459,7 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
         )}
 
         {/* Step 2: Mnemonic Display */}
-        {mode === "create" && step === 2 && (
+        {currentMode === "create" && step === 2 && (
           <div className="grid gap-4">
             <div className="rounded-lg border p-4">
               <h3 className="font-medium mb-4">Recovery Phrase</h3>
@@ -505,13 +513,13 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
         )}
 
         {/* Step 3: Completion */}
-        {mode === "create" && step === 3 && walletData && (
+        {currentMode === "create" && step === 3 && walletData && (
           <div className="grid gap-4">
             <div className="rounded-lg border p-4 text-center">
               <div className="w-12 h-12 bg-primary rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Check className="h-6 w-6 text-primary-foreground" />
               </div>
-              <h3 className="font-medium mb-2">AIWallet Created Successfully</h3>
+              <h3 className="font-medium mb-2">PeerStone wallet Created Successfully</h3>
               <p className="text-sm text-muted-foreground mb-4">Your blockchain wallet is ready to use.</p>
               <div className="rounded border bg-muted p-3">
                 <div className="text-xs text-muted-foreground mb-1">Wallet Address</div>
@@ -530,13 +538,13 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
             </div>
 
             <Button onClick={handleFinishSetup} className="w-full">
-              Continue to AIWallet
+              Continue to PeerStone wallet
             </Button>
           </div>
         )}
 
         {/* Brand Footer */}
-        <div className="text-center text-xs text-muted-foreground">© 2025 AIWallet. Powered by wallet.aiblock.net</div>
+        <div className="text-center text-xs text-muted-foreground">© 2025 PeerStone. Powered by wallet.aiblock.net</div>
       </div>
     </div>
   )

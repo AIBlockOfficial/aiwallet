@@ -22,9 +22,55 @@ const LoadingSpinner = () => (
   </div>
 )
 
+// Wallet flow types
+type WalletFlow = 'unlock' | 'create' | 'interface' | 'loading'
+
+// Inner component that has access to wallet context
+function WalletFlowHandler({ walletFlow, setWalletFlow }: { 
+  walletFlow: WalletFlow
+  setWalletFlow: (flow: WalletFlow) => void 
+}) {
+  // Dynamic import to get wallet context
+  const [useWallet, setUseWallet] = useState<any>(null)
+  
+  useEffect(() => {
+    const loadWalletContext = async () => {
+      const walletModule = await import("@/components/wallet-provider")
+      setUseWallet(() => walletModule.useWallet)
+    }
+    loadWalletContext()
+  }, [])
+
+  const walletContext = useWallet?.()
+
+  const handleWalletSetupComplete = (walletData: any) => {
+    // Set the wallet data in the provider context
+    if (walletContext?.setWalletData) {
+      walletContext.setWalletData(walletData)
+    }
+    setWalletFlow('interface')
+  }
+
+  if (walletFlow === 'loading') {
+    return <LoadingSpinner />
+  }
+
+  if (walletFlow === 'interface') {
+    return <WalletInterface />
+  }
+
+  // For unlock and create flows - handled by WalletSetup
+  return (
+    <WalletSetup 
+      mode={walletFlow === 'unlock' ? 'unlock' : 'create'}
+      onSetupComplete={handleWalletSetupComplete} 
+    />
+  )
+}
+
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [hasWallet, setHasWallet] = useState(false)
+  const [walletFlow, setWalletFlow] = useState<WalletFlow>('loading')
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -37,13 +83,10 @@ export default function Home() {
     try {
       // Check if user is already logged in
       const userLoggedIn = localStorage.getItem("user_logged_in")
-      const walletSetup = localStorage.getItem("wallet_setup")
       
       if (userLoggedIn === "true") {
         setIsLoggedIn(true)
-        if (walletSetup === "true") {
-          setHasWallet(true)
-        }
+        determineWalletFlow()
       }
     } catch (error) {
       console.error("Failed to access localStorage:", error)
@@ -52,12 +95,31 @@ export default function Home() {
     setIsLoading(false)
   }, [])
 
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true)
+  const determineWalletFlow = () => {
+    try {
+      const encryptedWallet = localStorage.getItem("encrypted_wallet_data")
+      const walletSetup = localStorage.getItem("wallet_setup")
+      
+      // SECURITY FIX: No more auto-open flow since we don't store passphrases
+      // Always require passphrase entry if wallet exists
+      
+      // Flow 2: User has encrypted wallet and needs to unlock with passphrase
+      if (encryptedWallet && walletSetup === "true") {
+        setWalletFlow('unlock')
+        return
+      }
+
+      // Flow 3 & 4: No existing wallet data - user needs to recover or create
+      setWalletFlow('create')
+    } catch (error) {
+      console.error("Failed to determine wallet flow:", error)
+      setWalletFlow('create')
+    }
   }
 
-  const handleWalletSetupComplete = (walletData: any) => {
-    setHasWallet(true)
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true)
+    determineWalletFlow()
   }
 
   if (isLoading) {
@@ -68,18 +130,11 @@ export default function Home() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />
   }
 
-  if (!hasWallet) {
-    return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <WalletSetup onSetupComplete={handleWalletSetupComplete} />
-      </Suspense>
-    )
-  }
-
+  // Handle wallet flows
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <WalletProvider>
-        <WalletInterface />
+        <WalletFlowHandler walletFlow={walletFlow} setWalletFlow={setWalletFlow} />
       </WalletProvider>
     </Suspense>
   )

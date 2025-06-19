@@ -6,6 +6,13 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 // Remove static import to prevent SDK loading on page load
 // import { walletService } from "@/lib/wallet"
 
+interface WalletData {
+  address: string
+  privateKey: string
+  mnemonic: string[]
+  passphrase: string
+}
+
 interface WalletContextType {
   isConnected: boolean
   address: string | null
@@ -16,13 +23,7 @@ interface WalletContextType {
   connect: () => Promise<void>
   disconnect: () => void
   refreshBalance: () => Promise<void>
-}
-
-interface WalletData {
-  address: string
-  privateKey: string
-  mnemonic: string[]
-  passphrase: string
+  setWalletData: (data: WalletData) => void
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -67,20 +68,27 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     try {
       // Dynamic import to avoid loading SDK until needed
       const { walletService } = await import("@/lib/wallet")
-      const balanceData = await walletService.getBalance(targetAddress)
-      console.log("Balance data received:", balanceData)
       
-      setBalance(balanceData.tokens)
-      setNftCount(balanceData.nfts)
-      setBalanceError(null) // Clear error on success
-      setHasInitialLoad(true) // Mark that we've completed initial load
+      // SECURITY FIX: Use in-memory wallet data for balance fetching
+      if (walletData) {
+        const balanceData = await walletService.getBalanceWithWalletData(targetAddress, walletData)
+        console.log("Balance data received:", balanceData)
+        
+        setBalance(balanceData.tokens)
+        setNftCount(balanceData.nfts)
+        setBalanceError(null) // Clear error on success
+        setHasInitialLoad(true) // Mark that we've completed initial load
+      } else {
+        // No wallet data in memory - balance cannot be fetched securely
+        throw new Error("Wallet not unlocked - please enter your passphrase")
+      }
     } catch (error) {
       console.error("Failed to fetch balance:", error)
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
       setBalanceError(errorMessage)
       // Don't update balance/nftCount on error - keep previous values or show error state
     }
-  }, [address, isClient])
+  }, [address, isClient, walletData])
 
   useEffect(() => {
     // Only access localStorage on client side
@@ -137,10 +145,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setBalanceError(null)
     
     try {
+      // SECURITY FIX: Use consistent storage keys and remove passphrase
       localStorage.removeItem("wallet_address")
       localStorage.removeItem("wallet_setup")
-      localStorage.removeItem("wallet_encrypted")
-      localStorage.removeItem("wallet_passphrase")
+      localStorage.removeItem("encrypted_wallet_data") // Fixed: was "wallet_encrypted"
+      // SECURITY FIX: No longer storing passphrase
+      // localStorage.removeItem("wallet_passphrase")
       localStorage.removeItem("user_logged_in")
       localStorage.removeItem("login_method")
       localStorage.removeItem("user_email")
@@ -170,6 +180,14 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return nftCount
   }
 
+  const updateWalletData = (data: WalletData) => {
+    setWalletData(data)
+    // Refresh balance immediately when wallet data is set
+    if (data.address) {
+      refreshBalance(data.address)
+    }
+  }
+
   return (
     <WalletContext.Provider
       value={{
@@ -182,6 +200,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         connect,
         disconnect,
         refreshBalance: () => refreshBalance(),
+        setWalletData: updateWalletData,
       }}
     >
       {children}

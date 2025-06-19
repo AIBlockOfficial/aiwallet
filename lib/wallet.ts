@@ -306,61 +306,57 @@ export class WalletService {
   }
 
   async getBalance(address: string): Promise<WalletBalance> {
-    console.log("WalletService.getBalance called for address:", address)
+    console.log("=== WalletService.getBalance called ===")
+    console.log("Address:", address)
+
     try {
       const { WalletClass } = await getSDKModules()
       if (!WalletClass) {
-        console.log("WalletClass not available, SDK not loaded")
-        throw new Error("2Way.js SDK not available")
+        console.log("SDK not available, using fallback")
+        return await this.fallback.getBalance(address)
       }
 
-      console.log("Creating wallet instance...")
       const wallet = new WalletClass()
+      console.log("Wallet instance created:", wallet)
+
+      // SECURITY FIX: Since we no longer store passphrases, balance fetching 
+      // will need to be handled differently. For now, return a placeholder
+      // that indicates wallet needs to be unlocked for balance access.
       
-      // Get the user's wallet data from storage to initialize the wallet properly
-      let userPassphrase = null
-      let userMnemonic = null
+      // TODO: Implement secure balance fetching that requires passphrase input
+      // or implement a session-based approach where balance is fetched after unlock
       
-      if (typeof window !== 'undefined') {
-        try {
-          const encryptedWallet = localStorage.getItem("wallet_encrypted")
-          const storedPassphrase = localStorage.getItem("wallet_passphrase")
-          
-          if (!encryptedWallet || !storedPassphrase) {
-            console.log("No stored wallet data found for balance fetching")
-            throw new Error("Wallet not properly initialized - missing credentials")
-          }
-          
-          userPassphrase = storedPassphrase
-          
-          // Decrypt the wallet data to get the mnemonic
-          try {
-            const walletData = await decryptWalletData(encryptedWallet, storedPassphrase)
-            userMnemonic = walletData.mnemonic
-            console.log("Successfully retrieved wallet credentials for balance fetching")
-          } catch (decryptError) {
-            console.error("Failed to decrypt wallet data:", decryptError)
-            throw new Error("Unable to decrypt wallet data for balance fetching")
-          }
-          
-        } catch (error) {
-          console.log("Could not retrieve wallet credentials:", error)
-          throw new Error("Unable to access wallet credentials for balance fetching")
-        }
+      throw new Error("Balance fetching requires wallet unlock - passphrase needed")
+
+    } catch (error) {
+      console.error("Balance fetch error:", error)
+      // Don't use fallback - let the error propagate so UI can show proper error state
+      throw error
+    }
+  }
+
+  async getBalanceWithWalletData(address: string, walletData: WalletData): Promise<WalletBalance> {
+    console.log("=== WalletService.getBalanceWithWalletData called ===")
+    console.log("Address:", address)
+
+    try {
+      const { WalletClass } = await getSDKModules()
+      if (!WalletClass) {
+        console.log("SDK not available, using fallback")
+        return await this.fallback.getBalance(address)
       }
-      
-      if (!userPassphrase || !userMnemonic) {
-        throw new Error("Missing wallet credentials for initialization")
-      }
-      
-      // Initialize the wallet with the user's credentials
-      const config = getNetworkConfig(userPassphrase)
-      console.log("Initializing wallet with user credentials...")
+
+      const wallet = new WalletClass()
+      console.log("Wallet instance created:", wallet)
+
+      // Initialize the wallet with the provided wallet data
+      const config = getNetworkConfig(walletData.passphrase)
+      console.log("Initializing wallet with provided credentials...")
       
       // Use fromSeed() method to initialize the wallet with the user's mnemonic
       if (wallet.fromSeed) {
-        const seedPhrase = userMnemonic.join(" ")
-        console.log("Calling fromSeed with user's mnemonic...")
+        const seedPhrase = walletData.mnemonic.join(" ")
+        console.log("Calling fromSeed with mnemonic...")
         const initResult = await wallet.fromSeed(seedPhrase, config)
         console.log("fromSeed result:", initResult)
         
