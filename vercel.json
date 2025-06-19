@@ -7,15 +7,15 @@
   "installCommand": "npm ci",
   "devCommand": "npm run dev",
   "env": {
-    "NEXT_PUBLIC_MEMPOOL_HOST": "@mempool_host",
-    "NEXT_PUBLIC_STORAGE_HOST": "@storage_host",
-    "NEXT_PUBLIC_VALENCE_HOST": "@valence_host"
+    "NEXT_PUBLIC_MEMPOOL_HOST": "https://mempool.aiblock.dev",
+    "NEXT_PUBLIC_STORAGE_HOST": "https://storage.aiblock.dev",
+    "NEXT_PUBLIC_VALENCE_HOST": "https://valence.aiblock.dev"
   },
   "build": {
     "env": {
-      "NEXT_PUBLIC_MEMPOOL_HOST": "@mempool_host",
-      "NEXT_PUBLIC_STORAGE_HOST": "@storage_host",
-      "NEXT_PUBLIC_VALENCE_HOST": "@valence_host"
+      "NEXT_PUBLIC_MEMPOOL_HOST": "https://mempool.aiblock.dev",
+      "NEXT_PUBLIC_STORAGE_HOST": "https://storage.aiblock.dev",
+      "NEXT_PUBLIC_VALENCE_HOST": "https://valence.aiblock.dev"
     }
   },
   "functions": {

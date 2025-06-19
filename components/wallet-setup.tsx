@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Copy, Check, Loader2, AlertCircle, Wallet, KeyRound, RefreshCw } from "lucide-react"
-import { walletService, generateMnemonic, encryptWalletData, validateMnemonic, decryptWalletData } from "@/lib/wallet"
+// Remove static imports to prevent SDK loading on page load
+// import { walletService, generateMnemonic, encryptWalletData, validateMnemonic, decryptWalletData } from "@/lib/wallet"
 
 interface WalletSetupProps {
   onSetupComplete: (walletData: WalletData) => void
@@ -52,6 +53,8 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
 
     setIsCreating(true)
     try {
+      // Dynamic import to avoid loading SDK until needed
+      const { generateMnemonic, validateMnemonic } = await import("@/lib/wallet")
       const generatedMnemonic = await generateMnemonic()
 
       // Validate the generated mnemonic
@@ -79,6 +82,8 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
         throw new Error("No wallet data found")
       }
 
+      // Dynamic import to avoid loading SDK until needed
+      const { decryptWalletData } = await import("@/lib/wallet")
       const walletData = await decryptWalletData(encryptedData, passphrase)
       localStorage.setItem("wallet_address", walletData.address)
       localStorage.setItem("wallet_setup", "true")
@@ -103,6 +108,9 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
         throw new Error("Recovery phrase must be exactly 12 words")
       }
 
+      // Dynamic import to avoid loading SDK until needed
+      const { walletService, validateMnemonic, encryptWalletData } = await import("@/lib/wallet")
+      
       const isValid = await validateMnemonic(mnemonicWords)
       if (!isValid) {
         throw new Error("Invalid recovery phrase")
@@ -141,6 +149,9 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
     setError("")
     setIsCreating(true)
     try {
+      // Dynamic import to avoid loading SDK until needed
+      const { walletService, validateMnemonic } = await import("@/lib/wallet")
+      
       // Validate mnemonic before creating wallet
       const isValid = await validateMnemonic(mnemonic)
       if (!isValid) {
@@ -163,6 +174,8 @@ export function WalletSetup({ onSetupComplete }: WalletSetupProps) {
     if (!walletData) return
     
     try {
+      // Dynamic import to avoid loading SDK until needed
+      const { encryptWalletData } = await import("@/lib/wallet")
       const encryptedData = await encryptWalletData(walletData, passphrase)
       localStorage.setItem("wallet_encrypted", encryptedData)
       localStorage.setItem("wallet_address", walletData.address)

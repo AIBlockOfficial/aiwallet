@@ -16,23 +16,28 @@ interface Message {
 }
 
 const SDKLoadingIndicator = () => {
-  const [isSDKLoading, setIsSDKLoading] = useState(true)
+  const [isSDKLoading, setIsSDKLoading] = useState(false)
 
   useEffect(() => {
-    // Check if SDK is loaded by attempting to access it
-    const checkSDKStatus = async () => {
-      try {
-        // This will trigger SDK loading if not already loaded
-        const { walletService } = await import("@/lib/wallet")
-        // Give a small delay to ensure SDK is properly loaded
-        setTimeout(() => setIsSDKLoading(false), 500)
-      } catch (error) {
-        console.error("SDK loading check failed:", error)
+    // Only show loading indicator when SDK is actually being used
+    // This prevents showing loading on initial page load when SDK isn't needed yet
+    let mounted = true
+
+    const checkSDKStatus = () => {
+      // Don't show loading indicator immediately
+      // Only show it if we're actually using wallet functions
+      if (mounted) {
         setIsSDKLoading(false)
       }
     }
 
-    checkSDKStatus()
+    // Small delay to avoid flash of loading state
+    const timer = setTimeout(checkSDKStatus, 100)
+
+    return () => {
+      mounted = false
+      clearTimeout(timer)
+    }
   }, [])
 
   if (!isSDKLoading) return null

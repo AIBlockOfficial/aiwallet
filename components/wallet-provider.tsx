@@ -3,7 +3,8 @@
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react"
-import { walletService } from "@/lib/wallet"
+// Remove static import to prevent SDK loading on page load
+// import { walletService } from "@/lib/wallet"
 
 interface WalletContextType {
   isConnected: boolean
@@ -64,6 +65,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     console.log("Fetching balance for address:", targetAddress)
 
     try {
+      // Dynamic import to avoid loading SDK until needed
+      const { walletService } = await import("@/lib/wallet")
       const balanceData = await walletService.getBalance(targetAddress)
       console.log("Balance data received:", balanceData)
       

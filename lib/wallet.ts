@@ -113,12 +113,8 @@ const loadSDKModules = async () => {
 }
 
 // Pre-load SDK modules when the module is imported (only on client-side)
-if (typeof window !== 'undefined') {
-  // Use setTimeout to avoid blocking the initial render
-  setTimeout(() => {
-    getSDKModules().catch(console.error)
-  }, 100)
-}
+// Removed automatic pre-loading to improve initial page load performance
+// SDK will be loaded on-demand when first needed
 
 interface WalletData {
   address: string
