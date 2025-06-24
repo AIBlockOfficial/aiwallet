@@ -64,7 +64,7 @@ export function WalletInterface() {
   const [showCopyFeedback, setShowCopyFeedback] = useState(false)
   const [isRefreshingBalance, setIsRefreshingBalance] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { balance, nftCount, address, disconnect, refreshBalance, balanceError } = useWallet()
+  const { balance, nftCount, address, disconnect, refreshBalance, balanceError, walletData } = useWallet()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })

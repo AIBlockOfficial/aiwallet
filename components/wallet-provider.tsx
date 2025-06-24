@@ -38,6 +38,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [balanceError, setBalanceError] = useState<string | null>(null)
   const [hasInitialLoad, setHasInitialLoad] = useState(false)
 
+  // Track window visibility for auto-refresh
+  const [isWindowVisible, setIsWindowVisible] = useState(true)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsWindowVisible(!document.hidden)
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
   useEffect(() => {
     // Mark as client-side
     setIsClient(true)
@@ -90,35 +100,43 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   }, [address, isClient, walletData])
 
+  // Only fetch balance when walletData is set (unlocked)
   useEffect(() => {
-    // Only access localStorage on client side
+    if (walletData && address && isClient) {
+      refreshBalance(address)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletData, address, isClient])
+
+  // Auto-refresh balance every 30 seconds when connected, wallet is unlocked, and window is visible
+  useEffect(() => {
+    if (!isConnected || !address || !walletData || balanceError || !isWindowVisible) return
+    const interval = setInterval(() => {
+      refreshBalance(address)
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [isConnected, address, walletData, balanceError, isWindowVisible, refreshBalance])
+
+  useEffect(() => {
     if (!isClient) return
 
-    try {
-      const savedAddress = localStorage.getItem("wallet_address")
-      const walletSetup = localStorage.getItem("wallet_setup")
+    const initializeWallet = async () => {
+      try {
+        // Check for existing wallet setup
+        const walletAddress = localStorage.getItem("wallet_address")
+        const walletSetup = localStorage.getItem("wallet_setup")
 
-      if (savedAddress && walletSetup) {
-        setAddress(savedAddress)
-        setIsConnected(true)
-        // Refresh balance immediately when wallet is loaded
-        refreshBalance(savedAddress)
+        if (walletAddress && walletSetup === "true") {
+          setAddress(walletAddress)
+          setIsConnected(true)
+        }
+      } catch (error) {
+        console.error("Failed to initialize wallet:", error)
       }
-    } catch (error) {
-      console.error("Failed to load wallet from storage:", error)
     }
-  }, [isClient, refreshBalance])
 
-  // Auto-refresh balance every 30 seconds when connected
-  useEffect(() => {
-    if (!isConnected || !address || balanceError) return // Don't auto-refresh if there's an error
-
-    const interval = setInterval(() => {
-      refreshBalance()
-    }, 30000) // 30 seconds
-
-    return () => clearInterval(interval)
-  }, [isConnected, address, balanceError, refreshBalance])
+    initializeWallet()
+  }, [isClient])
 
   const connect = async () => {
     if (!isClient) return
@@ -136,12 +154,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const disconnect = () => {
+  const disconnect = async () => {
     if (!isClient) return
 
     setAddress(null)
     setIsConnected(false)
-    setWalletData(null)
+    setWalletData(null) // SECURITY FIX: Clear wallet data from memory
     setBalanceError(null)
     
     try {
@@ -151,20 +169,19 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("encrypted_wallet_data") // Fixed: was "wallet_encrypted"
       // SECURITY FIX: No longer storing passphrase
       // localStorage.removeItem("wallet_passphrase")
-      localStorage.removeItem("user_logged_in")
-      localStorage.removeItem("login_method")
-      localStorage.removeItem("user_email")
+      
+      // Clear Supabase session data
+      const { supabase } = await import("@/lib/supabase")
+      if (supabase) {
+        await supabase.auth.signOut()
+      }
+      
     } catch (error) {
-      console.error("Failed to clear localStorage:", error)
+      console.error("Failed to clear data or sign out:", error)
     }
     
-    setBalance("0.00")
+    setBalance("0")
     setNftCount(0)
-
-    // Reload the page to return to login
-    if (typeof window !== 'undefined') {
-      window.location.reload()
-    }
   }
 
   const getDisplayBalance = () => {
@@ -182,10 +199,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const updateWalletData = (data: WalletData) => {
     setWalletData(data)
-    // Refresh balance immediately when wallet data is set
-    if (data.address) {
-      refreshBalance(data.address)
-    }
+    // No need to call refreshBalance here; handled by useEffect above
   }
 
   return (
