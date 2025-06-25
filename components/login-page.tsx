@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Wallet } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 interface LoginPageProps {
   onLoginSuccess: () => void
@@ -21,31 +22,54 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
-    // Simulate login process
-    setTimeout(() => {
+    setError("")
+    setSuccess("")
+    
+    if (!supabase) {
+      setError("Supabase is not configured.")
       setIsLoading(false)
-      localStorage.setItem("user_logged_in", "true")
-      localStorage.setItem("login_method", "email")
+      return
+    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+    setIsLoading(false)
+    if (error) {
+      setError(error.message)
+    } else {
+      setSuccess("Login successful!")
       onLoginSuccess()
-    }, 1500)
+    }
   }
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true)
-
-    // Simulate Google OAuth process
-    setTimeout(() => {
+    setError("")
+    setSuccess("")
+    if (!supabase) {
+      setError("Supabase is not configured.")
       setIsGoogleLoading(false)
-      localStorage.setItem("user_logged_in", "true")
-      localStorage.setItem("login_method", "google")
-      localStorage.setItem("user_email", "user@gmail.com")
-      onLoginSuccess()
-    }, 2000)
+      return
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/auth/callback'
+      }
+    })
+    setIsGoogleLoading(false)
+    if (error) {
+      setError(error.message)
+    } else {
+      setSuccess("Check your Google account!")
+    }
   }
 
   return (
@@ -53,12 +77,8 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       <div className="mx-auto grid w-[350px] gap-6">
         {/* Brand Icon */}
         <div className="flex justify-center">
-          <div className="w-16 h-16 flex items-center justify-center">
-            <img 
-              src="/logo_static.svg" 
-              alt="PeerStone" 
-              className="h-16 w-auto object-contain"
-            />
+          <div className="w-24 h-24 flex items-center justify-center">
+            <img src="/Peerstone.svg" alt="PeerStone" className="h-24 w-24" />
           </div>
         </div>
 
@@ -142,6 +162,8 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             <GoogleIcon className="mr-2 h-4 w-4" />
             {isGoogleLoading ? "Signing in with Google..." : "Login with Google"}
           </Button>
+          {error && <div className="text-red-600 text-sm text-center">{error}</div>}
+          {success && <div className="text-green-600 text-sm text-center">{success}</div>}
         </form>
 
         {/* Brand Footer */}
