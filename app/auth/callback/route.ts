@@ -13,16 +13,15 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
+          getAll() {
+            return cookieStore.getAll();
           },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options })
-          },
-        },
+          setAll(cookies) {
+            for (const cookie of cookies) {
+              cookieStore.set(cookie);
+            }
+          }
+        }
       }
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
@@ -32,6 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Collect all cookies and set them on the response
     const allCookies = cookieStore.getAll();
+    console.log('All cookies before redirect:', allCookies);
     const response = NextResponse.redirect(new URL('/', request.url));
     for (const cookie of allCookies) {
       response.cookies.set(cookie.name, cookie.value, cookie);
