@@ -30,7 +30,13 @@ export async function GET(request: NextRequest) {
     );
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return response;
+      // Debug: return cookies as JSON instead of redirecting
+      const allCookies = response.cookies.getAll();
+      return new Response(JSON.stringify({
+        cookies: allCookies
+      }), {
+        headers: { 'content-type': 'application/json' }
+      });
     }
     return NextResponse.redirect(new URL('/login?error=oauth', request.url));
   }
