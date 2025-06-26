@@ -58,12 +58,17 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       setIsGoogleLoading(false)
       return
     }
+    const redirectTo = window.location.origin + '/auth/callback'
+    console.log('[LoginPage] Initiating Google OAuth with redirectTo:', redirectTo)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/auth/callback'
+        redirectTo
       }
     })
+    if (error) {
+      console.error('[LoginPage] Google OAuth error:', error)
+    }
     setIsGoogleLoading(false)
     if (error) {
       setError(error.message)

@@ -89,13 +89,17 @@ export function AuthProvider({ children, serverUser = null }: { children: React.
     if (!configured || !supabase) {
       return { error: { message: 'Supabase not configured' } }
     }
-    
+    const redirectTo = `${window.location.origin}/auth/callback`
+    console.log('[AuthProvider] Initiating Google OAuth with redirectTo:', redirectTo)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo
       }
     })
+    if (error) {
+      console.error('[AuthProvider] Google OAuth error:', error)
+    }
     return { error }
   }
 
