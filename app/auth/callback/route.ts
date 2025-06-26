@@ -29,6 +29,14 @@ export async function GET(request: NextRequest) {
     if (error) {
       return NextResponse.redirect(new URL('/login?error=oauth', request.url))
     }
+
+    // Collect all cookies and set them on the response
+    const allCookies = cookieStore.getAll();
+    const response = NextResponse.redirect(new URL('/', request.url));
+    for (const cookie of allCookies) {
+      response.cookies.set(cookie.name, cookie.value, cookie);
+    }
+    return response;
   }
 
   // Always redirect to the main app after successful authentication
