@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import AuthServerWrapper from "./auth-server-wrapper";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -15,12 +16,15 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "PeerStone",
-  description: "Secure blockchain wallet powered by AIBlock 2Way.js SDK",
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
-  },
+  description: "Your secure blockchain wallet",
+  icons: [
+    { rel: "icon", url: "/favicon.ico" },
+    { rel: "icon", type: "image/png", sizes: "48x48", url: "/favicon-48x48.png" },
+    { rel: "icon", type: "image/png", sizes: "256x256", url: "/favicon-256x256.png" },
+    { rel: "icon", type: "image/png", sizes: "192x192", url: "/android-chrome-192x192.png" },
+    // Add more here if you add more sizes
+  ],
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
@@ -33,7 +37,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AuthServerWrapper>
+          {children}
+        </AuthServerWrapper>
       </body>
     </html>
   );

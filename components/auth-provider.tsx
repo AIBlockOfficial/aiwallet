@@ -18,10 +18,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null)
+export function AuthProvider({ children, serverUser = null }: { children: React.ReactNode, serverUser?: AuthUser | null }) {
+  const [user, setUser] = useState<AuthUser | null>(serverUser)
   const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!serverUser)
   const configured = isSupabaseConfigured()
 
   useEffect(() => {
@@ -31,16 +31,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Get initial session
-    const getInitialSession = async () => {
-      if (!supabase) return
-      const { data: { session: initialSession } } = await supabase.auth.getSession()
-      setSession(initialSession)
-      setUser(initialSession?.user as AuthUser || null)
+    // Get initial session if not provided by server
+    if (!serverUser) {
+      const getInitialSession = async () => {
+        if (!supabase) return
+        const { data: { session: initialSession } } = await supabase.auth.getSession()
+        setSession(initialSession)
+        setUser(initialSession?.user as AuthUser || null)
+        setIsLoading(false)
+      }
+      getInitialSession()
+    } else {
       setIsLoading(false)
     }
-
-    getInitialSession()
 
     // Listen for auth changes
     if (supabase) {
@@ -53,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return () => subscription.unsubscribe()
     }
-  }, [configured])
+  }, [configured, serverUser])
 
   const signUp = async (email: string, password: string) => {
     if (!configured || !supabase) {
