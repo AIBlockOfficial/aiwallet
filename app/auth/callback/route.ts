@@ -1,8 +1,10 @@
+export const dynamic = "force-dynamic";
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
+  console.log('--- /auth/callback route hit ---');
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
 
@@ -29,14 +31,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/login?error=oauth', request.url))
     }
 
-    // Collect all cookies and set them on the response
+    // Collect all cookies and return as JSON for debugging
     const allCookies = cookieStore.getAll();
     console.log('All cookies before redirect:', allCookies);
-    const response = NextResponse.redirect(new URL('/', request.url));
-    for (const cookie of allCookies) {
-      response.cookies.set(cookie.name, cookie.value, cookie);
-    }
-    return response;
+    return NextResponse.json({ cookies: allCookies });
+    // Uncomment below to restore redirect after debugging:
+    // const response = NextResponse.redirect(new URL('/', request.url));
+    // for (const cookie of allCookies) {
+    //   response.cookies.set(cookie.name, cookie.value, cookie);
+    // }
+    // return response;
   }
 
   // Always redirect to the main app after successful authentication
