@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+console.log('[Supabase] Initializing with URL:', supabaseUrl, 'ANON KEY:', supabaseAnonKey?.slice(0, 8))
+
 // Create a conditional supabase client that handles missing env vars
 export const supabase = supabaseUrl && supabaseAnonKey 
   ? createClient(supabaseUrl, supabaseAnonKey, {
