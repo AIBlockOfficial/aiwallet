@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
+  console.log('--- SSR Middleware running ---', request.nextUrl.pathname);
+  console.log('SSR Middleware cookies:', request.cookies.getAll());
   let response = NextResponse.next({
     request: {
       headers: request.headers,
