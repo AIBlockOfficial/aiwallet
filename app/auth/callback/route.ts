@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const cookieStore = cookies()
-    
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -26,10 +25,12 @@ export async function GET(request: NextRequest) {
         },
       }
     )
-    
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      return NextResponse.redirect(new URL('/login?error=oauth', request.url))
+    }
   }
 
-  // Redirect to the main app after successful authentication
+  // Always redirect to the main app after successful authentication
   return NextResponse.redirect(new URL('/', request.url))
 } 
