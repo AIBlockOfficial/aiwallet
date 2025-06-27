@@ -4,6 +4,8 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
+  console.log('[Callback] Raw request URL:', request.url);
+  console.log('[Callback] Request headers:', JSON.stringify(Object.fromEntries(request.headers.entries())));
   console.log('--- /auth/callback route hit ---');
   console.log('[Callback] Full request URL:', request.url);
   const requestUrl = new URL(request.url)
