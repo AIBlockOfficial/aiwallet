@@ -203,7 +203,7 @@ export function WalletSetup({ onSetupComplete, onClose, mode }: WalletSetupProps
         <div className="flex justify-center">
           <div className="w-16 h-16 flex items-center justify-center">
             <img 
-              src="/logo_static.svg" 
+              src="/Peerstone.svg" 
               alt="PeerStone" 
               className="h-16 w-auto object-contain"
             />

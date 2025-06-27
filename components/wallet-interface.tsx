@@ -162,7 +162,7 @@ export function WalletInterface() {
           <div className="flex items-center space-x-3">
             <div className="w-auto h-16 flex items-center justify-center">
               <img 
-                src="/logo_static.svg" 
+                src="/Peerstone.svg" 
                 alt="PeerStone" 
                 className="h-16 w-auto object-contain"
               />
