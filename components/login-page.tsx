@@ -68,13 +68,9 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     })
     if (error) {
       console.error('[LoginPage] Google OAuth error:', error)
+      setError(error.message)
     }
     setIsGoogleLoading(false)
-    if (error) {
-      setError(error.message)
-    } else {
-      setSuccess("Check your Google account!")
-    }
   }
 
   return (
